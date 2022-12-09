@@ -71,7 +71,7 @@ directors_schema = DirectorSchema(many=True)
 genre_schema = GenreSchema()
 genres_schema = GenreSchema(many=True)
 
-api = Api(app)
+api = Api(app=app, title="SkyPro: Sergei Levchuk__Home Work 17", )
 movie_ns = api.namespace("movies")
 director_ns = api.namespace("directors")
 genre_ns = api.namespace("genres")
@@ -81,15 +81,28 @@ genre_ns = api.namespace("genres")
 class MoviesView(Resource):
     """
     Запрос всех фильмов. При запросе с параметром
-    :parameter - /movies/?director_id=1
-    выводит список фильмов с данным режиссером
-    """
+    :parameter- `/movies` — возвращает список всех фильмов, разделенный по страницам;
+    :parameter- `/movies/<id>` — возвращает подробную информацию о фильме.
 
-    # def get(self):
-    #     all_movies = db.session.query(Movie).all()
-    #     return movies_schema.dump(all_movies), 200
+    Организован поиск по режиссерам и жанрам
+    :parameter - /movies/?director_id=1
+    выводит список фильмов по ID режиссером
+    :parameter - /movies/?genre_id=4
+    выводит список всех фильмов по ID жанров
+    :parameter - /movies/?director_id=2&genre_id=4
+    выводит список фильмов по ID режиссера и жанра
+    """
     def get(self):
         director = request.args.get("director_id")
+        genre = request.args.get("genre_id")
+
+        if director and genre is not None:
+            all_movies = Movie.query.filter(Movie.director_id == director).filter(Movie.genre_id == genre)
+            return movies_schema.dump(all_movies), 200
+
+        if genre is not None:
+            all_movies = Movie.query.filter(Movie.genre_id == genre)
+            return movies_schema.dump(all_movies), 200
 
         if director is None:
             all_movies = db.session.query(Movie).all()
@@ -108,6 +121,15 @@ class MoviesView(Resource):
 
 @movie_ns.route('/<int:mid>')
 class MoviesView(Resource):
+    """
+    Реализованы все методы
+    :parameter- `/movies` — возвращает список всех фильмов, разделенный по страницам;
+    :parameter- `/movies/<id>` — возвращает подробную информацию о фильме.
+
+    :parameter- `POST /movies/` —  добавляет кино в фильмотеку,
+    :parameter- `PUT /movies/<id>` —  обновляет кино,
+    :parameter- `DELETE /movies/<id>` —  удаляет кино.
+    """
     def get(self, mid: int):
         try:
             movie = db.session.query(Movie).filter(Movie.id == mid).one()
@@ -167,6 +189,14 @@ class MoviesView(Resource):
 
 @director_ns.route('/')
 class DirectorView(Resource):
+    """
+    :parameter- `/directors/` — возвращает всех режиссеров,
+    :parameter- `/directors/<id>` — возвращает подробную информацию о режиссере,
+
+    :parameter- `POST /directors/` —  добавляет режиссера,
+    :parameter- `PUT /directors/<id>` —  обновляет режиссера,
+    :parameter- `DELETE /directors/<id>` —  удаляет режиссера.
+    """
     def get(self):
         all_directors = db.session.query(Director).all()
         return directors_schema.dump(all_directors), 200
@@ -182,6 +212,14 @@ class DirectorView(Resource):
 
 @director_ns.route('/<int:did>')
 class DirectorView(Resource):
+    """
+    :parameter- `/directors/` — возвращает всех режиссеров,
+    :parameter- `/directors/<id>` — возвращает подробную информацию о режиссере,
+
+    :parameter- `POST /directors/` —  добавляет режиссера,
+    :parameter- `PUT /directors/<id>` —  обновляет режиссера,
+    :parameter- `DELETE /directors/<id>` —  удаляет режиссера.
+    """
     def get(self, did: int):
         try:
             director = db.session.query(Director).filter(Director.id == did).one()
@@ -223,6 +261,14 @@ class DirectorView(Resource):
 
 @genre_ns.route('/')
 class GenreView(Resource):
+    """
+    :parameter- `/genres/` —  возвращает все жанры,
+    :parameter- `/genres/<id>` — возвращает информацию о жанре с перечислением списка фильмов по жанру,
+
+    :parameter- `POST /genres/` —  добавляет жанр,
+    :parameter- `PUT /genres/<id>` —  обновляет жанр,
+    :parameter- `DELETE /genres/<id>` —  удаляет жанр.
+    """
     def get(self):
         all_genres = db.session.query(Genre).all()
         return genres_schema.dump(all_genres), 200
@@ -238,6 +284,14 @@ class GenreView(Resource):
 
 @genre_ns.route('/<int:gid>')
 class GenreView(Resource):
+    """
+    :parameter- `/genres/` —  возвращает все жанры,
+    :parameter- `/genres/<id>` — возвращает информацию о жанре с перечислением списка фильмов по жанру,
+
+    :parameter- `POST /genres/` —  добавляет жанр,
+    :parameter- `PUT /genres/<id>` —  обновляет жанр,
+    :parameter- `DELETE /genres/<id>` —  удаляет жанр.
+    """
     def get(self, gid: int):
         try:
             genre = db.session.query(Genre).filter(Genre.id == gid).one()
@@ -275,13 +329,6 @@ class GenreView(Resource):
         db.session.commit()
 
         return "", 204
-
-
-# @movie_ns.route('/search/<int:pk>')
-# class MoviesView(Resource):
-#     def get(self, pk):
-#         movies = Movie.query.filter(Movie.director_id == pk)
-#         return movies_schema.dump(movies), 200
 
 
 if __name__ == '__main__':
