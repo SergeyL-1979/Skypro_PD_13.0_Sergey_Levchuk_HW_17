@@ -5,6 +5,7 @@ from flask_restx import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
 from marshmallow import Schema, fields
 
+
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -78,22 +79,23 @@ genre_ns = api.namespace("genres")
 
 @movie_ns.route('/')
 class MoviesView(Resource):
+    """
+    Запрос всех фильмов. При запросе с параметром
+    :parameter - /movies/?director_id=1
+    выводит список фильмов с данным режиссером
+    """
 
     # def get(self):
     #     all_movies = db.session.query(Movie).all()
     #     return movies_schema.dump(all_movies), 200
     def get(self):
-        # director = db.session.get(Director.id)
-        director = request.args.get(Director.id)
+        director = request.args.get("director_id")
 
         if director is None:
-            all_movies = Movie.query.all()
-            return movies_schema.dump(all_movies), 200
+            all_movies = db.session.query(Movie).all()
         else:
             all_movies = Movie.query.filter(Movie.director_id == director)
-            return movies_schema.dump(all_movies), 200
-
-
+        return movies_schema.dump(all_movies), 200
 
     def post(self):
         req_json = request.json
@@ -102,8 +104,6 @@ class MoviesView(Resource):
         with db.session.begin():
             db.session.add(new_movie)
         return "", 201
-
-
 
 
 @movie_ns.route('/<int:mid>')
