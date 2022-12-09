@@ -1,5 +1,5 @@
-# app.py
-
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from flask import Flask, request
 from flask_restx import Api, Resource
 from flask_sqlalchemy import SQLAlchemy
